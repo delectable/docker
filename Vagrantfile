@@ -1,27 +1,27 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-BOX_NAME = ENV['BOX_NAME'] || "ubuntu"
-BOX_URI = ENV['BOX_URI'] || "http://files.vagrantup.com/precise64.box"
-VF_BOX_URI = ENV['BOX_URI'] || "http://files.vagrantup.com/precise64_vmware_fusion.box"
-AWS_BOX_URI = ENV['BOX_URI'] || "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
-AWS_REGION = ENV['AWS_REGION'] || "us-east-1"
-AWS_AMI = ENV['AWS_AMI'] || "ami-69f5a900"
-AWS_INSTANCE_TYPE = ENV['AWS_INSTANCE_TYPE'] || 't1.micro'
-SSH_PRIVKEY_PATH = ENV['SSH_PRIVKEY_PATH']
-PRIVATE_NETWORK = ENV['PRIVATE_NETWORK']
+BOX_NAME                    = ENV['BOX_NAME']            || "ubuntu"
+BOX_URI                     = ENV['BOX_URI']             || "http://files.vagrantup.com/precise64.box"
+VF_BOX_URI                  = ENV['BOX_URI']             || "http://files.vagrantup.com/precise64_vmware_fusion.box"
+AWS_BOX_URI                 = ENV['BOX_URI']             || "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
+AWS_REGION                  = ENV['AWS_REGION']          || "us-east-1"
+AWS_AMI                     = ENV['AWS_AMI']             || "ami-69f5a900"
+AWS_INSTANCE_TYPE           = ENV['AWS_INSTANCE_TYPE']   || 't1.micro'
+SSH_PRIVKEY_PATH            = ENV['SSH_PRIVKEY_PATH']    || '~/.ssh/id_rsa'
+PRIVATE_NETWORK             = ENV['PRIVATE_NETWORK']
 
 # Boolean that forwards the Docker dynamic ports 49000-49900
 # See http://docs.docker.io/en/latest/use/port_redirection/ for more
 # $ FORWARD_DOCKER_PORTS=1 vagrant [up|reload]
-FORWARD_DOCKER_PORTS = ENV['FORWARD_DOCKER_PORTS']
-VAGRANT_RAM = ENV['VAGRANT_RAM'] || 512
-VAGRANT_CORES = ENV['VAGRANT_CORES'] || 1
+FORWARD_DOCKER_PORTS        = ENV['FORWARD_DOCKER_PORTS']
+VAGRANT_RAM                 = ENV['VAGRANT_RAM']         || 512
+VAGRANT_CORES               = ENV['VAGRANT_CORES']       || 1
 
 # You may also provide a comma-separated list of ports
 # for Vagrant to forward. For example:
 # $ FORWARD_PORTS=8080,27017 vagrant [up|reload]
-FORWARD_PORTS = ENV['FORWARD_PORTS']
+FORWARD_PORTS               = ENV['FORWARD_PORTS']
 
 # A script to upgrade from the 12.04 kernel to the raring backport kernel (3.8)
 # and install docker.
@@ -102,17 +102,17 @@ if [ ! -d /opt/VBoxGuestAdditions-4.3.6/ ]; then
 fi
 VBOX_SCRIPT
 
-Vagrant::Config.run do |config|
+Vagrant::Config.run do |_config|
   # Setup virtual machine box. This VM configuration code is always executed.
-  config.vm.box = BOX_NAME
-  config.vm.box_url = BOX_URI
+  _config.vm.box                   = BOX_NAME
+  _config.vm.box_url               = BOX_URI
 
   # Use the specified private key path if it is specified and not empty.
   if SSH_PRIVKEY_PATH
-      config.ssh.private_key_path = SSH_PRIVKEY_PATH
+    _config.ssh.private_key_path   = SSH_PRIVKEY_PATH
   end
 
-  config.ssh.forward_agent = true
+  _config.ssh.forward_agent        = true
 end
 
 # Providers were added on Vagrant >= 1.1.0
@@ -132,75 +132,83 @@ end
 # script.  Only ever use "vm.provision" *one time* per provider.  That means
 # every single provider has an override, and every single one configures
 # "vm.provision".  Much saddness, but such is life.
-Vagrant::VERSION >= "1.1.0" and Vagrant.configure("2") do |config|
-  config.vm.provider :aws do |aws, override|
-    username = "ubuntu"
-    override.vm.box_url = AWS_BOX_URI
-    override.vm.provision :shell, :inline => $script, :args => username
-    aws.access_key_id = ENV["AWS_ACCESS_KEY"]
-    aws.secret_access_key = ENV["AWS_SECRET_KEY"]
-    aws.keypair_name = ENV["AWS_KEYPAIR_NAME"]
-    override.ssh.username = username
-    aws.region = AWS_REGION
-    aws.ami    = AWS_AMI
-    aws.instance_type = AWS_INSTANCE_TYPE
-  end
+if Vagrant::VERSION >= "1.1.0" 
+  Vagrant.configure("2") do |_config|
+    _config.vm.provider(:aws) do |_aws, _override|
+      _username                 = "ubuntu"
+      _override.vm.box_url      = AWS_BOX_URI
+      _override.vm.provision      :shell, inline: $script, args: _username
+      _aws.access_key_id        = ENV["AWS_ACCESS_KEY"]
+      _aws.secret_access_key    = ENV["AWS_SECRET_KEY"]
+      _aws.keypair_name         = ENV["AWS_KEYPAIR_NAME"]
+      _override.ssh.username    = _username
+      _aws.region               = AWS_REGION
+      _aws.ami                  = AWS_AMI
+      _aws.instance_type        = AWS_INSTANCE_TYPE
+    end
 
-  config.vm.provider :rackspace do |rs, override|
-    override.vm.provision :shell, :inline => $script
-    rs.username = ENV["RS_USERNAME"]
-    rs.api_key  = ENV["RS_API_KEY"]
-    rs.public_key_path = ENV["RS_PUBLIC_KEY"]
-    rs.flavor   = /512MB/
-    rs.image    = /Ubuntu/
-  end
+    _config.vm.provider(:rackspace) do |_rs, _override|
+      _override.vm.provision    :shell, inline: $script
+      _rs.username              = ENV["RS_USERNAME"]
+      _rs.api_key               = ENV["RS_API_KEY"]
+      _rs.public_key_path       = ENV["RS_PUBLIC_KEY"]
+      _rs.flavor                = /512MB/
+      _rs.image                 = /Ubuntu/
+    end
 
-  config.vm.provider :vmware_fusion do |f, override|
-    override.vm.box_url = VF_BOX_URI
-    override.vm.synced_folder ".", "/vagrant", disabled: true
-    override.vm.provision :shell, :inline => $script
-    f.vmx["displayName"] = "docker"
-  end
+    _config.vm.provider(:vmware_fusion) do |_f, _override|
+      _override.vm.box_url      = VF_BOX_URI
+      _override.vm.synced_folder  ".", "/vagrant", disabled: true
+      _override.vm.provision      :shell, inline: $script
+      _f.vmx["displayName"]     = "docker"
+    end
 
-  config.vm.provider :virtualbox do |vb, override|
-    override.vm.provision :shell, :inline => $vbox_script
-    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
-    vb.customize ["modifyvm", :id, "--memory", VAGRANT_RAM]
-    vb.customize ["modifyvm", :id, "--cpus", VAGRANT_CORES]
+    _config.vm.provider(:virtualbox) do |_vb, _override|
+      _override.vm.provision     :shell, inline: $vbox_script
+      _vb.customize             ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      _vb.customize             ["modifyvm", :id, "--natdnsproxy1", "on"]
+      _vb.customize             ["modifyvm", :id, "--memory", VAGRANT_RAM]
+      _vb.customize             ["modifyvm", :id, "--cpus", VAGRANT_CORES]
+    end
   end
-end
-
+elsif Vagrant::VERSION < "1.1.0"
 # If this is a version 1 config, virtualbox is the only option.  A version 2
 # config would have already been set in the above provider section.
-Vagrant::VERSION < "1.1.0" and Vagrant::Config.run do |config|
-  config.vm.provision :shell, :inline => $vbox_script
+  Vagrant::Config.run do |_config|
+    _config.vm.provision :shell, inline: $vbox_script
+  end
 end
 
 # Setup port forwarding per loaded environment variables
-forward_ports = FORWARD_DOCKER_PORTS.nil? ? [] : [*49153..49900]
-forward_ports += FORWARD_PORTS.split(',').map{|i| i.to_i } if FORWARD_PORTS
-if forward_ports.any?
-  Vagrant::VERSION < "1.1.0" and Vagrant::Config.run do |config|
-    forward_ports.each do |port|
-      config.vm.forward_port port, port
-    end
-  end
+_forward_ports            = FORWARD_DOCKER_PORTS.nil? ? [] : [*49153..49900]
+if FORWARD_PORTS
+  _forward_ports         += FORWARD_PORTS.split(',').map{|_port| _port.to_i }
+end
 
-  Vagrant::VERSION >= "1.1.0" and Vagrant.configure("2") do |config|
-    forward_ports.each do |port|
-      config.vm.network :forwarded_port, :host => port, :guest => port, auto_correct: true
+if _forward_ports.any?
+  if  Vagrant::VERSION < "1.1.0"
+    Vagrant::Config.run do |_config|
+      _forward_ports.each do |_port|
+        _config.vm.forward_port _port, _port
+      end
+    end
+  elsif Vagrant::VERSION >= "1.1.0"
+    Vagrant.configure("2") do |_config|
+      _forward_ports.each do |_port|
+        _config.vm.network :forwarded_port, host: _port, guest: _port, auto_correct: true
+      end
     end
   end
 end
 
-if !PRIVATE_NETWORK.nil?
-  Vagrant::VERSION < "1.1.0" and Vagrant::Config.run do |config|
-    config.vm.network :hostonly, PRIVATE_NETWORK
-  end
-
-  Vagrant::VERSION >= "1.1.0" and Vagrant.configure("2") do |config|
-    config.vm.network "private_network", ip: PRIVATE_NETWORK
+if PRIVATE_NETWORK
+  if Vagrant::VERSION < "1.1.0"
+    Vagrant::Config.run do |_config|
+      _config.vm.network :hostonly, PRIVATE_NETWORK
+    end
+  elsif Vagrant::VERSION >= "1.1.0"
+    Vagrant.configure("2") do |_config|
+      _config.vm.network "private_network", ip: PRIVATE_NETWORK
+    end
   end
 end
-
